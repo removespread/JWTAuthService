@@ -30,4 +30,4 @@ Access, Refresh токены обоюдно связаны, Refresh операц
 Payload токенов должен содержать сведения об ip адресе клиента, которому он был выдан. В случае, если ip адрес изменился, при рефреш операции нужно послать email warning на почту юзера (для упрощения можно использовать моковые данные).
 
 
-[![wakatime](https://wakatime.com/badge/user/c893e3cc-7629-48b6-bccc-00ffde7fc39b.svg)]([https://wakatime.com/@c893e3cc-7629-48b6-bccc-00ffde7fc39b](https://wakatime.com/@c893e3cc-7629-48b6-bccc-00ffde7fc39b/projects/yhqgqczwqz?start=2024-11-25&end=2024-12-01))
+[![wakatime](\https://wakatime.com/share/badges/projects?q=JuniorTest)]([https://wakatime.com/@c893e3cc-7629-48b6-bccc-00ffde7fc39b](https://wakatime.com/@c893e3cc-7629-48b6-bccc-00ffde7fc39b/projects/yhqgqczwqz?start=2024-11-25&end=2024-12-01))
