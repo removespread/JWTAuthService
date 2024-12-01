@@ -145,7 +145,9 @@ func (as *AuthService) CreateTokenPair(ctx context.Context, userID uuid.UUID, cl
 
 // RefreshToken обновляет пару токенов, используя refresh token
 func (as *AuthService) RefreshToken(refreshToken string, clientIP string) (*models.AccessTokenRefreshToken, error) {
-	// Получение данных из БД
+	fmt.Printf("Attempting to refresh token for client IP: %s\n", clientIP)
+
+	// Получение данных из БД и сравнение хэшей
 	tokenData, err := as.tokenRepository.GetRefreshToken(context.Background(), refreshToken)
 	if err != nil {
 		fmt.Printf("Error getting refresh token from DB: %v\n", err)
@@ -156,6 +158,12 @@ func (as *AuthService) RefreshToken(refreshToken string, clientIP string) (*mode
 	if tokenData.Used {
 		fmt.Printf("Refresh token already used\n")
 		return nil, fmt.Errorf("refresh token already used")
+	}
+
+	// Проверка IP адреса
+	if tokenData.ClientIP != clientIP {
+		fmt.Printf("Client IP mismatch: expected %s, got %s\n", tokenData.ClientIP, clientIP)
+		return nil, fmt.Errorf("invalid client IP")
 	}
 
 	// Создание новой пары токенов

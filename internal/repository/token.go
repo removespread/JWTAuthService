@@ -7,6 +7,7 @@ import (
 	"juniortest/internal/models"
 
 	"github.com/google/uuid"
+	"golang.org/x/crypto/bcrypt"
 )
 
 // -----------------------------------------------------------------------------------------------
@@ -65,13 +66,55 @@ func (r *tokenRepository) SaveRefreshToken(ctx context.Context, token *models.Re
 
 // Получение RefreshToken из базы данных по хэшу
 func (r *tokenRepository) GetRefreshToken(ctx context.Context, tokenHash string) (*models.RefreshTokenData, error) {
-	// SQL запрос
-	query := `SELECT * FROM refresh_tokens WHERE token_hash = $1`
-	// Переменная для RefreshToken
-	var token models.RefreshTokenData
+	fmt.Printf("Getting refresh tokens from DB for hash: %s\n", tokenHash)
+
+	// SQL-запрос
+	query := `
+		SELECT id, user_id, token_hash, client_ip, access_token_id, created_at, expires_at, used 
+		FROM refresh_tokens 
+		WHERE used = false AND expires_at > NOW()
+	`
+
 	// Выполнение запроса, если ошибка, то возвращаем её
-	err := r.db.QueryRowContext(ctx, query, tokenHash).Scan(&token.ID, &token.UserID, &token.TokenHash, &token.ClientIP, &token.AccessTokenID, &token.CreatedAt, &token.ExpiresAt, &token.Used)
-	return &token, err
+	rows, err := r.db.QueryContext(ctx, query)
+	if err != nil {
+		return nil, fmt.Errorf("database query error: %v", err)
+	}
+	defer rows.Close()
+
+	// Цикл для получения данных из базы данных
+	for rows.Next() {
+		var token models.RefreshTokenData
+		err := rows.Scan(
+			&token.ID,
+			&token.UserID,
+			&token.TokenHash,
+			&token.ClientIP,
+			&token.AccessTokenID,
+			&token.CreatedAt,
+			&token.ExpiresAt,
+			&token.Used,
+		)
+		if err != nil {
+			fmt.Printf("Error scanning row: %v\n", err)
+			continue
+		}
+
+		// Сравниваем хэши с помощью bcrypt
+		err = bcrypt.CompareHashAndPassword([]byte(token.TokenHash), []byte(tokenHash))
+		if err == nil {
+			fmt.Printf("Found matching refresh token with ID: %s\n", token.ID)
+			return &token, nil
+		}
+		fmt.Printf("Token hash comparison failed: %v\n", err)
+	}
+
+	// Проверка ошибок при итерации строк
+	if err = rows.Err(); err != nil {
+		return nil, fmt.Errorf("error iterating rows: %v", err)
+	}
+
+	return nil, fmt.Errorf("no valid refresh token found")
 }
 
 // Отметка RefreshToken как использованного

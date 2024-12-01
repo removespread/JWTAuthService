@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"juniortest/internal/config"
 	"juniortest/internal/handler"
+	"juniortest/internal/models"
 	"juniortest/internal/repository"
 	"juniortest/internal/service"
 	"log"
@@ -40,6 +41,43 @@ func main() {
 		c.JSON(200, gin.H{
 			"message": "ok",
 		})
+	})
+
+	// test router
+	router.GET("/debug/tokens", func(c *gin.Context) {
+		rows, err := cfg.Database.DB.Query("SELECT * FROM refresh_tokens")
+		if err != nil {
+			c.JSON(500, gin.H{"error": err.Error()})
+			return
+		}
+		defer rows.Close()
+
+		var tokens []models.RefreshTokenData
+		for rows.Next() {
+			var token models.RefreshTokenData
+			err := rows.Scan(
+				&token.ID,
+				&token.UserID,
+				&token.TokenHash,
+				&token.ClientIP,
+				&token.AccessTokenID,
+				&token.CreatedAt,
+				&token.ExpiresAt,
+				&token.Used,
+			)
+			if err != nil {
+				c.JSON(500, gin.H{"error": err.Error()})
+				return
+			}
+			tokens = append(tokens, token)
+		}
+
+		if err = rows.Err(); err != nil {
+			c.JSON(500, gin.H{"error": err.Error()})
+			return
+		}
+
+		c.JSON(200, tokens)
 	})
 
 	// Запуск сервера
