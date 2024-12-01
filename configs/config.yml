@@ -1,0 +1,12 @@
+database:
+  host: db
+  port: 5432
+  user: test
+  password: test
+  db_name: test
+
+jwt_secret_key: test
+
+token_expiry:
+  access_token: 15m
+  refresh_token: 24h
