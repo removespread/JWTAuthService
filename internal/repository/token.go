@@ -3,6 +3,7 @@ package repository
 import (
 	"context"
 	"database/sql"
+	"fmt"
 	"juniortest/internal/models"
 
 	"github.com/google/uuid"
@@ -31,13 +32,34 @@ func NewTokenRepository(db *sql.DB) TokenRepository {
 
 // Сохранение RefreshToken в базе данных
 func (r *tokenRepository) SaveRefreshToken(ctx context.Context, token *models.RefreshTokenData) error {
+	fmt.Printf("SaveRefreshToken called with token ID: %s\n", token.ID)
+
 	// SQL запрос
 	query := `
 		INSERT INTO refresh_tokens (id, user_id, token_hash, client_ip, access_token_id, created_at, expires_at, used)
 		VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
 	`
+
 	// Выполнение запроса, если ошибка, то возвращаем её
-	_, err := r.db.ExecContext(ctx, query, token.ID, token.UserID, token.TokenHash, token.ClientIP, token.AccessTokenID, token.CreatedAt, token.ExpiresAt, token.Used)
+	result, err := r.db.ExecContext(ctx, query,
+		token.ID,
+		token.UserID,
+		token.TokenHash,
+		token.ClientIP,
+		token.AccessTokenID,
+		token.CreatedAt,
+		token.ExpiresAt,
+		token.Used,
+	)
+
+	if err != nil {
+		fmt.Printf("Database error: %v\n", err)
+		return fmt.Errorf("database error: %v", err)
+	}
+
+	rows, err := result.RowsAffected()
+	fmt.Printf("Rows affected: %d\n", rows)
+
 	return err
 }
 

@@ -24,7 +24,7 @@ func NewAuthHandler(authService *service.AuthService) *AuthHandler {
 
 // GetTokens - обработчик для получения токенов
 func (h *AuthHandler) GetTokens(c *gin.Context) {
-	userID := c.Param("user_id")
+	userID := c.Query("user_id")
 
 	fmt.Printf("Получен запрос с user_id: '%s'\n", userID)
 	fmt.Printf("Все параметры запроса: %v\n", c.Request.URL.Query())
@@ -35,13 +35,22 @@ func (h *AuthHandler) GetTokens(c *gin.Context) {
 		return
 	}
 
+	// Проверка формата UUID
+	if len(userID) < 32 {
+		c.JSON(http.StatusBadRequest, gin.H{
+			"error": "invalid user_id format, must be UUID (e.g., 123a4567-e89b-12d3-a456-426614174000)",
+		})
+		return
+	}
+
 	// Получение IP-адреса клиента
 	clientIP := c.ClientIP()
 
 	// Получение токенов, обращение к слою сервисов
 	tokens, err := h.authService.GetTokens(userID, clientIP)
 	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": "failed to issue tokens"})
+		fmt.Printf("Error getting tokens: %v\n", err)
+		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return
 	}
 
